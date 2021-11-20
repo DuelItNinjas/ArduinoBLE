@@ -4,7 +4,6 @@
 
 #define BT_RX_PIN 2
 #define BT_TX_PIN 3
-
 #define LED_PIN LED_BUILTIN // LED for blink command
 
 // See https://gist.github.com/francis2110/8f69843dd57ae07dce80 for IR codes for LG
@@ -16,6 +15,17 @@
 #define IR_DOWN     0x20DF827D
 #define IR_LEFT     0x20DFE01F
 #define IR_RIGHT    0x20DF609F
+
+// Bluetooth characteristics for available features
+#define BTC_BLINK       '\x0'
+#define BTC_IR_POWER    '\x1'
+#define BTC_IR_SETTINGS '\x2'
+#define BTC_IR_CONFIRM  '\x3'
+#define BTC_IR_CANCEL   '\x4'
+#define BTC_IR_UP       '\x5'
+#define BTC_IR_DOWN     '\x6'
+#define BTC_IR_LEFT     '\x7'
+#define BTC_IR_RIGHT    '\x8'
 
 SoftwareSerial BTSerial(2, 3);
 String BTBuffer;
@@ -43,11 +53,7 @@ void loop() {
     BTSerial.write(Serial.read());
   }
 
-  readFromBT();
-}
-
-// Read from HC-06 Bluetooth module
-void readFromBT() {
+  // Read from HC-06 Bluetooth module
   if (BTSerial.available()) {
 
     // Start reading and store in buffer
