@@ -19,19 +19,6 @@
 #define IR_LEFT     0x20DFE01F
 #define IR_RIGHT    0x20DF609F
 
-// Bluetooth characteristics for available features
-#define BTC_GET         '\x0'
-#define BTC_IR_POWER    '\x1'
-#define BTC_IR_SETTINGS '\x2'
-#define BTC_IR_CONFIRM  '\x3'
-#define BTC_IR_CANCEL   '\x4'
-#define BTC_IR_UP       '\x5'
-#define BTC_IR_DOWN     '\x6'
-#define BTC_IR_LEFT     '\x7'
-#define BTC_IR_RIGHT    '\x8'
-#define BTC_BLINK       '\x9'
-#define BTC_TEMP        '\x10'
-
 SoftwareSerial BTSerial(2, 3);
 String BTBuffer;
 DHT dht(DHT_PIN, DHT_TYPE);
@@ -66,7 +53,13 @@ void loop() {
 
     // Start reading and store in buffer
     while (BTSerial.available()) {
-      BTBuffer += (char)BTSerial.read();
+
+      char temp = (char)BTSerial.read();
+
+      // Ignore newline or carriage return characters for ease of parsing command
+      if (temp != '\n' && temp != '\r') {
+        BTBuffer += temp;
+      }
       delay(10); // Delay to let the arduino process the incoming bytes
     }
 
@@ -77,14 +70,40 @@ void loop() {
     Serial.print("BT Buffer: ");
     Serial.println(BTBuffer);
     BTBuffer = "";
+    BTSerial.println("OK");
   }
 }
 
 // Execute the appropriate function based on the given Command value
 void parseCommand() {
-  // TODO: temporary
-  if (BTBuffer == "OK") {
+  if (BTBuffer == "ok") {
+  } else if (BTBuffer == "blnk") {
     blinkCmd();
+  } else if (BTBuffer == "tmp") {
+    readTemp();
+    BTSerial.print("Humidity: ");
+    BTSerial.print(hum);
+    BTSerial.print("%  Temperature: ");
+    BTSerial.println(temp);
+  } else if (BTBuffer == "irpwr") {
+    IrSender.sendNECMSB(IR_POWER, 32, false);
+  } else if (BTBuffer == "irsttng") {
+    IrSender.sendNECMSB(IR_SETTINGS, 32, false);
+  } else if (BTBuffer == "ircnfrm") {
+    IrSender.sendNECMSB(IR_CONFIRM, 32, false);
+  } else if (BTBuffer == "ircncl") {
+    IrSender.sendNECMSB(IR_CANCEL, 32, false);
+  } else if (BTBuffer == "iru") {
+    IrSender.sendNECMSB(IR_UP, 32, false);
+  } else if (BTBuffer == "ird") {
+    IrSender.sendNECMSB(IR_DOWN, 32, false);
+  } else if (BTBuffer == "irl") {
+    IrSender.sendNECMSB(IR_LEFT, 32, false);
+  } else if (BTBuffer == "irr") {
+    IrSender.sendNECMSB(IR_RIGHT, 32, false);
+  } else {
+    BTSerial.print("Could not recognize command: ");
+    BTSerial.println(BTBuffer);
   }
 }
 
@@ -93,11 +112,6 @@ void blinkCmd() {
   digitalWrite(LED_PIN, HIGH);
   delay(1000);
   digitalWrite(LED_PIN, LOW);
-}
-
-// Transmit 'confirm' IR code
-void irConfirm() {
-  IrSender.sendNECMSB(IR_SETTINGS, 32, false);
 }
 
 void readTemp() {
